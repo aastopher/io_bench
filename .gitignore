@@ -1,0 +1,32 @@
+# virtual env
+venv
+virtual_env/
+virtualenv/
+venv/
+
+# environment
+env
+.env*
+
+# dev
+data/
+results/
+logs/
+config/
+s3/
+sink/
+logs
+output
+data/
+result/
+
+# Python Byte Code Files
+# Byte-compiled / optimized / DLL files
+__pycache__/
+.pytest_cache
+*.py[cod]
+*$py.class
+*.pid
+.DS_Store
+.vscode/*
+.python-version
