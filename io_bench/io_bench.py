@@ -4,12 +4,22 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pyarrow.feather as feather
 import fastavro
+from typing import List, Dict, Any, Optional
 from io_bench.utilities.bench import IOBench as Bench
 from io_bench.utilities.explain import generate_report
 from io_bench.utilities.parsing import AvroParser, PolarsParquetParser, ArrowParquetParser, FastParquetParser, FeatherParser, ArrowFeatherParser
 
 class IOBench:
-    def __init__(self, source_file, output_dir='./data', runs=10, parsers=None):
+    def __init__(self, source_file: str, output_dir: str = './data', runs: int = 10, parsers: Optional[List[str]] = None) -> None:
+        """
+        Benchmark performance of standard flat file formats and partitioning schemes.
+
+        Args:
+            source_file (str): Path to the source CSV file.
+            output_dir (str): Directory for output files.
+            runs (int): Number of benchmark runs.
+            parsers (Optional[List[str]]): List of parsers to use.
+        """
         self.source_file = source_file
         self.output_dir = output_dir
         self.runs = runs
@@ -30,7 +40,13 @@ class IOBench:
 
         self.parsers = parsers if parsers is not None else list(self.available_parsers.keys())
 
-    def generate_sample_data(self, num_records=100000):
+    def generate_sample_data(self, num_records: int = 100000) -> None:
+        """
+        Generate sample data and save it to the source file.
+
+        Args:
+            num_records (int): Number of records to generate.
+        """
         data = {
             'Region': ['North America', 'Europe', 'Asia'] * (num_records // 3),
             'Country': ['USA', 'Germany', 'China'] * (num_records // 3),
@@ -45,7 +61,13 @@ class IOBench:
         
         df.to_csv(self.source_file, index=False)
 
-    def convert_to_partitioned_formats(self, partition_size_mb=10):
+    def convert_to_partitioned_formats(self, partition_size_mb: int = 10) -> None:
+        """
+        Convert the source file to partitioned formats.
+
+        Args:
+            partition_size_mb (int): Size of each partition in MB.
+        """
         df = pd.read_csv(self.source_file)
         
         os.makedirs(self.avro_dir, exist_ok=True)
@@ -64,7 +86,14 @@ class IOBench:
             self._write_parquet(partition_df, os.path.join(self.parquet_dir, f'part_{part_number}.parquet'))
             self._write_feather(partition_df, os.path.join(self.feather_dir, f'part_{part_number}.feather'))
 
-    def _write_avro(self, df, file_path):
+    def _write_avro(self, df: pd.DataFrame, file_path: str) -> None:
+        """
+        Write a DataFrame to an Avro file.
+
+        Args:
+            df (pd.DataFrame): DataFrame to write.
+            file_path (str): Path to the output Avro file.
+        """
         records = df.to_dict('records')
         schema = {
             'type': 'record',
@@ -80,15 +109,39 @@ class IOBench:
         with open(file_path, 'wb') as out:
             fastavro.writer(out, schema, records)
 
-    def _write_parquet(self, df, file_path):
+    def _write_parquet(self, df: pd.DataFrame, file_path: str) -> None:
+        """
+        Write a DataFrame to a Parquet file.
+
+        Args:
+            df (pd.DataFrame): DataFrame to write.
+            file_path (str): Path to the output Parquet file.
+        """
         table = pa.Table.from_pandas(df)
         pq.write_table(table, file_path)
 
-    def _write_feather(self, df, file_path):
+    def _write_feather(self, df: pd.DataFrame, file_path: str) -> None:
+        """
+        Write a DataFrame to a Feather file.
+
+        Args:
+            df (pd.DataFrame): DataFrame to write.
+            file_path (str): Path to the output Feather file.
+        """
         table = pa.Table.from_pandas(df)
         feather.write_feather(table, file_path)
 
-    def run_benchmarks(self, columns=None, suffix=None):
+    def run_benchmarks(self, columns: Optional[List[str]] = None, suffix: Optional[str] = None) -> List[Bench]:
+        """
+        Run benchmarks using the specified parsers.
+
+        Args:
+            columns (Optional[List[str]]): List of columns to select.
+            suffix (Optional[str]): Suffix for benchmark IDs.
+
+        Returns:
+            List[Bench]: List of benchmark results.
+        """
         benchmarks = []
 
         if suffix is None:
@@ -103,5 +156,12 @@ class IOBench:
         
         return benchmarks
 
-    def generate_report(self, benchmark_results, report_dir='./result'):
+    def generate_report(self, benchmark_results: List[Bench], report_dir: str = './result') -> None:
+        """
+        Generate a report from benchmark results.
+
+        Args:
+            benchmark_results (List[Bench]): List of benchmark results.
+            report_dir (str): Directory to save the report.
+        """
         generate_report(benchmark_results, dir=report_dir)

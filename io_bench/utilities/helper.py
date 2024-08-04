@@ -1,6 +1,12 @@
 import polars as pl
 
-def print_wide(df: pl.DataFrame):
+def print_wide(df: pl.DataFrame) -> None:
+    """
+    Print a wide DataFrame in chunks.
+
+    Args:
+        df (pl.DataFrame): DataFrame to print.
+    """
     num_cols = len(df.columns)
     chunk_size = 8
 

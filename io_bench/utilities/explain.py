@@ -2,11 +2,19 @@ import os
 import plotly.express as px
 import polars as pl
 from rich.console import Console
+from typing import List
 from io_bench.utilities.helper import print_wide
 
 console = Console()
 
-def generate_report(benchmark_results: list, dir: str):
+def generate_report(benchmark_results: List['IOBench'], dir: str) -> None:
+    """
+    Generate a report from benchmark results.
+
+    Args:
+        benchmark_results (List[IOBench]): List of benchmark results.
+        dir (str): Directory to save the report.
+    """
     summary_metrics = [
         'total_time', 'mean_time_per_row', 'mean_cpu_usage', 
         'mean_thread_count', 'rows_per_sec', 'params_per_sec', 

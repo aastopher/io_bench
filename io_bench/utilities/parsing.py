@@ -3,16 +3,30 @@ import os
 import glob
 import polars as pl
 import pyarrow as pa
+from typing import Any,List, Optional
 from rich.console import Console
 from fastparquet import ParquetFile
 import pyarrow.feather as feather
 
 class AvroParser:
     def __init__(self, dir: str) -> None:
+        """
+        Args:
+            dir (str): Directory containing Avro files.
+        """
         self.dir = dir
         self.file_paths = glob.glob(os.path.join(self.dir, "*"))
 
-    def to_polars(self, columns: list = None):
+    def to_polars(self, columns: Optional[List[str]] = None) -> pl.DataFrame:
+        """
+        Convert Avro files to a Polars DataFrame.
+
+        Args:
+            columns (Optional[List[str]]): List of columns to select.
+
+        Returns:
+            pl.DataFrame: Combined DataFrame from Avro files.
+        """
         dfs = [pl.read_avro(file, columns=columns) for file in self.file_paths]
         if dfs:
             combined_df = pl.concat(dfs, how="diagonal_relaxed", parallel=True)
@@ -22,17 +36,43 @@ class AvroParser:
 
 class PolarsParquetParser:
     def __init__(self, dir: str) -> None:
+        """
+        Args:
+            dir (str): Directory containing Parquet files.
+        """
         self.dir = dir
         
-    def to_polars(self, columns: list = None):
+    def to_polars(self, columns: Optional[List[str]] = None) -> pl.DataFrame:
+        """
+        Convert Parquet files to a Polars DataFrame.
+
+        Args:
+            columns (Optional[List[str]]): List of columns to select.
+
+        Returns:
+            pl.DataFrame: Combined DataFrame from Parquet files.
+        """
         return pl.read_parquet(f'{self.dir}/*.parquet', columns=columns)
 
 class ArrowParquetParser:
     def __init__(self, dir: str) -> None:
+        """
+        Args:
+            dir (str): Directory containing Parquet files.
+        """
         self.dir = dir
         self.file_paths = glob.glob(os.path.join(self.dir, "*"))
 
-    def to_polars(self, columns: list = None):
+    def to_polars(self, columns: Optional[List[str]] = None) -> pl.DataFrame:
+        """
+        Convert Parquet files to a Polars DataFrame using PyArrow.
+
+        Args:
+            columns (Optional[List[str]]): List of columns to select.
+
+        Returns:
+            pl.DataFrame: Combined DataFrame from Parquet files.
+        """
         dfs = [pl.read_parquet(file, columns=columns, use_pyarrow=True) for file in self.file_paths]
         if dfs:
             combined_df = pl.concat(dfs, how="diagonal_relaxed", parallel=True)
@@ -42,10 +82,23 @@ class ArrowParquetParser:
 
 class FastParquetParser:
     def __init__(self, dir: str) -> None:
+        """
+        Args:
+            dir (str): Directory containing Parquet files.
+        """
         self.dir = dir
         self.file_paths = glob.glob(os.path.join(self.dir, "*"))
 
-    def to_polars(self, columns: list = None):
+    def to_polars(self, columns: Optional[List[str]] = None) -> pl.DataFrame:
+        """
+        Convert Parquet files to a Polars DataFrame using FastParquet.
+
+        Args:
+            columns (Optional[List[str]]): List of columns to select.
+
+        Returns:
+            pl.DataFrame: Combined DataFrame from Parquet files.
+        """
         dfs = [pl.from_pandas(ParquetFile(file).to_pandas(columns)) for file in self.file_paths]
         if dfs:
             combined_df = pl.concat(dfs, how="diagonal_relaxed", parallel=True)
@@ -55,10 +108,23 @@ class FastParquetParser:
 
 class FeatherParser:
     def __init__(self, dir: str) -> None:
+        """
+        Args:
+            dir (str): Directory containing Feather files.
+        """
         self.dir = dir
         self.file_paths = glob.glob(os.path.join(self.dir, "*"))
 
-    def to_polars(self, columns: list = None):
+    def to_polars(self, columns: Optional[List[str]] = None) -> pl.DataFrame:
+        """
+        Convert Feather files to a Polars DataFrame.
+
+        Args:
+            columns (Optional[List[str]]): List of columns to select.
+
+        Returns:
+            pl.DataFrame: Combined DataFrame from Feather files.
+        """
         dfs = [pl.read_ipc(file, columns=columns, memory_map=False) for file in self.file_paths]
         if dfs:
             combined_df = pl.concat(dfs, how="diagonal_relaxed", parallel=True)
@@ -68,10 +134,23 @@ class FeatherParser:
 
 class ArrowFeatherParser:
     def __init__(self, dir: str) -> None:
+        """
+        Args:
+            dir (str): Directory containing Feather files.
+        """
         self.dir = dir
         self.file_paths = glob.glob(os.path.join(self.dir, "*"))
 
-    def to_polars(self, columns: list = None):
+    def to_polars(self, columns: Optional[List[str]] = None) -> pl.DataFrame:
+        """
+        Convert Feather files to a Polars DataFrame using PyArrow.
+
+        Args:
+            columns (Optional[List[str]]): List of columns to select.
+
+        Returns:
+            pl.DataFrame: Combined DataFrame from Feather files.
+        """
         dfs = [pl.read_ipc(file, columns=columns, memory_map=False, use_pyarrow=True) for file in self.file_paths]
         if dfs:
             combined_df = pl.concat(dfs, how="diagonal_relaxed", parallel=True)
@@ -80,14 +159,24 @@ class ArrowFeatherParser:
         return combined_df
 
 class CSV2Partitioned:
-    def __init__(self, csv_file: str, out_dir: str, max_rows_per_file: int = 10000, file_types: list = None):
+    def __init__(self, csv_file: str, out_dir: str, max_rows_per_file: int = 10000, file_types: Optional[List[str]] = None) -> None:
+        """
+        Args:
+            csv_file (str): Path to the source CSV file.
+            out_dir (str): Directory for output files.
+            max_rows_per_file (int): Maximum number of rows per partition file.
+            file_types (Optional[List[str]]): List of file types to convert to.
+        """
         self.csv_file = csv_file
         self.out_dir = out_dir
         self.max_rows_per_file = max_rows_per_file
         self.file_types = file_types if file_types else ['avro', 'parquet', 'feather']
         self.console = Console()
 
-    def convert(self):
+    def convert(self) -> None:
+        """
+        Convert the source CSV file to partitioned formats.
+        """
         for file_type in self.file_types:
             if file_type == 'avro':
                 self.convert_to_avro()
@@ -98,40 +187,71 @@ class CSV2Partitioned:
             else:
                 self.console.print(f"[red]Unsupported file type: {file_type}")
 
-    def convert_to_avro(self):
+    def convert_to_avro(self) -> None:
+        """
+        Convert the CSV file to Avro format.
+        """
         if self._is_folder_empty("avro"):
             self._create_folder_if_not_exist("avro")
             self._convert(write_func=pl.DataFrame.write_avro, ext="avro")
         else:
             self.console.print(f"[yellow]Skipping conversion: '{os.path.join(self.out_dir, 'avro')}' is not empty.")
 
-    def convert_to_parquet(self):
+    def convert_to_parquet(self) -> None:
+        """
+        Convert the CSV file to Parquet format.
+        """
         if self._is_folder_empty("parquet"):
             self._create_folder_if_not_exist("parquet")
             self._convert(write_func=pl.DataFrame.write_parquet, ext="parquet")
         else:
             self.console.print(f"[yellow]Skipping conversion: '{os.path.join(self.out_dir, 'parquet')}' is not empty.")
 
-    def convert_to_feather(self):
+    def convert_to_feather(self) -> None:
+        """
+        Convert the CSV file to Feather format.
+        """
         if self._is_folder_empty("feather"):
             self._create_folder_if_not_exist("feather")
             self._convert(write_func=feather.write_feather, ext="feather")
         else:
             self.console.print(f"[yellow]Skipping conversion: '{os.path.join(self.out_dir, 'feather')}' is not empty.")
 
-    def _is_folder_empty(self, ext):
+    def _is_folder_empty(self, ext: str) -> bool:
+        """
+        Check if a folder is empty.
+
+        Args:
+            ext (str): File extension indicating the folder to check.
+
+        Returns:
+            bool: True if the folder is empty, False otherwise.
+        """
         folder_path = os.path.join(self.out_dir, ext)
         if os.path.exists(folder_path):
             files = os.listdir(folder_path)
             return not files
         return True
 
-    def _create_folder_if_not_exist(self, ext):
+    def _create_folder_if_not_exist(self, ext: str) -> None:
+        """
+        Create a folder if it does not exist.
+
+        Args:
+            ext (str): File extension indicating the folder to create.
+        """
         folder_path = os.path.join(self.out_dir, ext)
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
-    def _convert(self, write_func, ext):
+    def _convert(self, write_func: Any, ext: str) -> None:
+        """
+        Convert the DataFrame to a specified format and save it in partitions.
+
+        Args:
+            write_func (Any): Function to write the DataFrame.
+            ext (str): File extension for the output files.
+        """
         df = pd.read_csv(self.csv_file)
         polars_df = pl.from_pandas(df)
 
