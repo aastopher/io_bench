@@ -7,7 +7,7 @@ from io_bench.utilities.helper import print_wide
 
 console = Console()
 
-def generate_report(benchmark_results: List['IOBench'], dir: str) -> None:
+def gen_report(benchmark_results: List['IOBench'], dir: str) -> None:
     """
     Generate a report from benchmark results.
 

@@ -17,6 +17,7 @@ logs
 output
 data/
 result/
+site/
 .dev.py
 .dev
 dev.py
