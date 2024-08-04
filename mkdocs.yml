@@ -9,6 +9,6 @@ plugins:
 
 nav:
   - IOBench Docs: index.md
-  - installation.md
-  - quick_start.md
-  - io_bench.md
+  - Installation: installation.md
+  - Quick Start: quick_start.md
+  - IOBench: io_bench.md

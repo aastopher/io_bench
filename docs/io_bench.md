@@ -1,1 +1,1 @@
-::: io_bench.io_bench
+::: io_bench.io_bench.IOBench
