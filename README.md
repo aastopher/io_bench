@@ -1,3 +1,9 @@
+<!-- [![Documentation Status](https://readthedocs.org/projects/io_bench/badge/?version=latest)](https://io_bench.readthedocs.io/en/latest/?badge=latest) -->
+<!-- [![codecov](https://codecov.io/gh/aastopher/io_bench/graph/badge.svg?token=3RSWSCO72X)](https://codecov.io/gh/aastopher/io_bench) -->
+<!-- [![PyPI version](https://badge.fury.io/py/io_bench.svg)](https://badge.fury.io/py/io_bench) -->
+<!-- [![DeepSource](https://app.deepsource.com/gh/aastopher/io_bench.svg/?label=active+issues&show_trend=true&token=QdzCwtyocLG_4fymZUbw1WX5)](https://app.deepsource.com/gh/aastopher/io_bench/?ref=repository-badge) -->
+
+
 # IO Bench
 
 IO Bench is a library designed to benchmark the performance of different file formats and partitioning schemes for large datasets. It allows users to generate sample data, convert it to various formats, and run benchmarks to measure the performance of these formats.
