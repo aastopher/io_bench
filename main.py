@@ -1,8 +1,8 @@
 from io_bench import IOBench
 
 def main():
-    # Initialize the IOBench object
-    io_bench = IOBench(source_file='./data/source_100K.csv')
+    # Initialize the IOBench object with runs and parsers
+    io_bench = IOBench(source_file='./data/source_100K.csv', runs=20, parsers=['avro', 'parquet_polars'])
 
     # Generate sample data (if needed)
     io_bench.generate_sample_data()

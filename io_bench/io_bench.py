@@ -9,13 +9,26 @@ from io_bench.utilities.explain import generate_report
 from io_bench.utilities.parsing import AvroParser, PolarsParquetParser, ArrowParquetParser, FastParquetParser, FeatherParser, ArrowFeatherParser
 
 class IOBench:
-    def __init__(self, source_file, output_dir='./data'):
+    def __init__(self, source_file, output_dir='./data', runs=10, parsers=None):
         self.source_file = source_file
         self.output_dir = output_dir
+        self.runs = runs
+        self.benchmark_counter = 0
+
         self.avro_dir = os.path.join(output_dir, 'avro')
         self.parquet_dir = os.path.join(output_dir, 'parquet')
         self.feather_dir = os.path.join(output_dir, 'feather')
-        self.benchmark_counter = 0
+
+        self.available_parsers = {
+            'avro': AvroParser(self.avro_dir),
+            'parquet_polars': PolarsParquetParser(self.parquet_dir),
+            'parquet_arrow': ArrowParquetParser(self.parquet_dir),
+            'parquet_fast': FastParquetParser(self.parquet_dir),
+            'feather': FeatherParser(self.feather_dir),
+            'arrow_feather': ArrowFeatherParser(self.feather_dir)
+        }
+
+        self.parsers = parsers if parsers is not None else list(self.available_parsers.keys())
 
     def generate_sample_data(self, num_records=100000):
         data = {
@@ -77,22 +90,16 @@ class IOBench:
 
     def run_benchmarks(self, columns=None, suffix=None):
         benchmarks = []
-        parsers = [
-            (AvroParser(self.avro_dir), 'avro'),
-            (PolarsParquetParser(self.parquet_dir), 'parquet_polars'),
-            (ArrowParquetParser(self.parquet_dir), 'parquet_arrow'),
-            (FastParquetParser(self.parquet_dir), 'parquet_fast'),
-            (FeatherParser(self.feather_dir), 'feather'),
-            (ArrowFeatherParser(self.feather_dir), 'arrow_feather')
-        ]
 
         if suffix is None:
             suffix = f'_{self.benchmark_counter}'
             self.benchmark_counter += 1
 
-        for parser, id in parsers:
-            bench = Bench(parser, columns=columns, id=f'{id}{suffix}').benchmark()
-            benchmarks.append(bench)
+        for name in self.parsers:
+            if name in self.available_parsers:
+                parser = self.available_parsers[name]
+                bench = Bench(parser, columns=columns, num_runs=self.runs, id=f'{name}{suffix}').benchmark()
+                benchmarks.append(bench)
         
         return benchmarks
 

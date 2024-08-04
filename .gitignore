@@ -7,6 +7,8 @@
 coverage.xml
 
 # dev
+main.py
+box/*
 data/
 results/
 logs/
