@@ -1,32 +1,48 @@
-# virtual env
-venv
-virtual_env/
-virtualenv/
-venv/
+# testing
+**/.tox
 
-# environment
-env
-.env*
+# coverage
+**/htmlcov
+.coverage
+coverage.xml
 
 # dev
 data/
 results/
 logs/
 config/
-s3/
-sink/
 logs
 output
 data/
 result/
+.dev.py
+.dev
+dev.py
+dev*/
+**.dev/
+requirements_*.txt
 
-# Python Byte Code Files
-# Byte-compiled / optimized / DLL files
-__pycache__/
-.pytest_cache
-*.py[cod]
-*$py.class
-*.pid
-.DS_Store
+# caches
+**/logs
+**/__pycache__
+**/.pytest_cache
+**/*.egg-info
+**/dist
+**/docs/build
+**/_build
 .vscode/*
 .python-version
+
+
+# system files
+.DS_Store
+
+# virtual environments
+**/venv
+venv
+virtual_env/
+virtualenv/
+
+# environment
+env
+.env*

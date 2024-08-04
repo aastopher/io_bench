@@ -1,0 +1,8 @@
+fastavro==1.9.5
+fastparquet==2024.5.0
+pandas==2.2.2
+plotly==5.23.0
+polars==1.4.0
+psutil==6.0.0
+pyarrow==17.0.0
+rich==13.7.1
