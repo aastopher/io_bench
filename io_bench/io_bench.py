@@ -91,7 +91,6 @@ class IOBench:
             size_mb (int): Size of each partition in MB.
         """
         asyncio.run(self._partition(size_mb))
-        self.partitioned = True
 
     async def _partition(self, size_mb: int = 10) -> None:
         df = pd.read_csv(self.source_file)
