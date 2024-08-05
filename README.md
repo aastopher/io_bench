@@ -4,7 +4,7 @@
 [![DeepSource](https://app.deepsource.com/gh/aastopher/io_bench.svg/?label=code+coverage&show_trend=true&token=3NT8mR1AQRLW9zDNKWQ8vgFl)](https://app.deepsource.com/gh/aastopher/io_bench/)
 
 # IO Bench
-IO Bench is a library designed to benchmark the performance of different file formats and partitioning schemes for large datasets. It allows users to generate sample data, convert it to various formats, and run benchmarks to measure the performance of these formats.
+IO Bench is a library designed to benchmark the performance of different file formats and partitioning schemes for large in memory datasets. It allows users to generate sample data, convert source data to various formats, and run benchmarks to measure the performance of these formats.
 
 ## Features
 - Generate sample data for benchmarking.
