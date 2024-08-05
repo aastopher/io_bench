@@ -5,12 +5,33 @@ import pyarrow.parquet as pq
 import pyarrow.feather as feather
 import fastavro
 from typing import List, Dict, Any, Optional
+import asyncio
 from io_bench.utilities.bench import IOBench as Bench
-from io_bench.utilities.explain import gen_report
-from io_bench.utilities.parsing import AvroParser, PolarsParquetParser, ArrowParquetParser, FastParquetParser, FeatherParser, ArrowFeatherParser
+from io_bench.utilities.explain import generate_report
+from io_bench.utilities.parsing import (
+    AvroParser, 
+    PolarsParquetParser, 
+    ArrowParquetParser, 
+    FastParquetParser, 
+    FeatherParser, 
+    ArrowFeatherParser
+)
 
 class IOBench:
-    def __init__(self, source_file: str, output_dir: str = './data', runs: int = 10, parsers: Optional[List[str]] = None) -> None:
+    def __init__(
+            self, 
+            source_file: str, 
+            output_dir: str = './data', 
+            runs: int = 10, 
+            parsers: Optional[List[str]] = [
+                'avro', 
+                'parquet_polars', 
+                'parquet_arrow', 
+                'parquet_fast', 
+                'feather', 
+                'feather_arrow'
+            ]
+        ) -> None:
         """
         Benchmark performance of standard flat file formats and partitioning schemes.
 
@@ -35,10 +56,11 @@ class IOBench:
             'parquet_arrow': ArrowParquetParser(self.parquet_dir),
             'parquet_fast': FastParquetParser(self.parquet_dir),
             'feather': FeatherParser(self.feather_dir),
-            'arrow_feather': ArrowFeatherParser(self.feather_dir)
+            'feather_arrow': ArrowFeatherParser(self.feather_dir)
         }
 
         self.parsers = parsers if parsers is not None else list(self.available_parsers.keys())
+        self.selected_parsers = {name: self.available_parsers[name] for name in self.parsers if name in self.available_parsers}
 
     def gen_sample_data(self, records: int = 100000) -> None:
         """
@@ -68,6 +90,10 @@ class IOBench:
         Args:
             size_mb (int): Size of each partition in MB.
         """
+        asyncio.run(self._partition(size_mb))
+        self.partitioned = True
+
+    async def _partition(self, size_mb: int = 10) -> None:
         df = pd.read_csv(self.source_file)
         
         os.makedirs(self.avro_dir, exist_ok=True)
@@ -78,15 +104,21 @@ class IOBench:
         record_size = df.memory_usage(deep=True).sum() // len(df)
         records_per_partition = partition_size // record_size
         
+        tasks = []
         for i in range(0, len(df), records_per_partition):
             partition_df = df.iloc[i:i + records_per_partition]
             part_number = i // records_per_partition
             
-            self._write_avro(partition_df, os.path.join(self.avro_dir, f'part_{part_number}.avro'))
-            self._write_parquet(partition_df, os.path.join(self.parquet_dir, f'part_{part_number}.parquet'))
-            self._write_feather(partition_df, os.path.join(self.feather_dir, f'part_{part_number}.feather'))
+            if 'avro' in self.parsers:
+                tasks.append(self._write_avro(partition_df, os.path.join(self.avro_dir, f'part_{part_number}.avro')))
+            if any(parser in self.parsers for parser in ['parquet_polars', 'parquet_arrow', 'parquet_fast']):
+                tasks.append(self._write_parquet(partition_df, os.path.join(self.parquet_dir, f'part_{part_number}.parquet')))
+            if any(parser in self.parsers for parser in ['feather', 'feather_arrow']):
+                tasks.append(self._write_feather(partition_df, os.path.join(self.feather_dir, f'part_{part_number}.feather')))
+        
+        await asyncio.gather(*tasks)
 
-    def _write_avro(self, df: pd.DataFrame, file_path: str) -> None:
+    async def _write_avro(self, df: pd.DataFrame, file_path: str) -> None:
         """
         Write a DataFrame to an Avro file.
 
@@ -109,7 +141,7 @@ class IOBench:
         with open(file_path, 'wb') as out:
             fastavro.writer(out, schema, records)
 
-    def _write_parquet(self, df: pd.DataFrame, file_path: str) -> None:
+    async def _write_parquet(self, df: pd.DataFrame, file_path: str) -> None:
         """
         Write a DataFrame to a Parquet file.
 
@@ -120,7 +152,7 @@ class IOBench:
         table = pa.Table.from_pandas(df)
         pq.write_table(table, file_path)
 
-    def _write_feather(self, df: pd.DataFrame, file_path: str) -> None:
+    async def _write_feather(self, df: pd.DataFrame, file_path: str) -> None:
         """
         Write a DataFrame to a Feather file.
 
@@ -148,11 +180,9 @@ class IOBench:
             suffix = f'_{self.benchmark_counter}'
             self.benchmark_counter += 1
 
-        for name in self.parsers:
-            if name in self.available_parsers:
-                parser = self.available_parsers[name]
-                bench = Bench(parser, columns=columns, num_runs=self.runs, id=f'{name}{suffix}').benchmark()
-                benchmarks.append(bench)
+        for name, parser in self.selected_parsers.items():
+            bench = Bench(parser, columns=columns, num_runs=self.runs, id=f'{name}{suffix}').benchmark()
+            benchmarks.append(bench)
         
         return benchmarks
 
@@ -164,4 +194,4 @@ class IOBench:
             benchmark_results (List[Bench]): List of benchmark results.
             report_dir (str): Directory to save the report.
         """
-        gen_report(benchmark_results, dir=report_dir)
+        generate_report(benchmark_results, dir=report_dir)
