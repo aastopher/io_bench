@@ -114,7 +114,8 @@ class IOBench:
             run_task = progress.add_task(f'[green]Benchmarking {self.parser.__class__.__name__}', total=self.num_runs)
 
             for i in range(self.num_runs):
-                progress.update(run_task, description=f'[magenta]({i+1}/{self.num_runs}) - [green]{self.parser.__class__.__name__}: [blue]Reading files...')
+                # progress.update(run_task, description=f'[magenta]({i+1}/{self.num_runs}) - [green]{self.parser.__class__.__name__}: [blue]Reading files...')
+                progress.update(run_task, description=f'[magenta]({i+1}/{self.num_runs}) - [green]{self.id}: [blue]Reading files...')
 
                 start_benchmark_time = time.perf_counter()
                 if self.columns:

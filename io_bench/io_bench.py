@@ -4,8 +4,10 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pyarrow.feather as feather
 import fastavro
-from typing import List, Dict, Any, Optional
+import tempfile
+from typing import List, Dict, Optional
 import asyncio
+from rich.console import Console
 from io_bench.utilities.bench import IOBench as Bench
 from io_bench.utilities.explain import generate_report
 from io_bench.utilities.parsing import (
@@ -16,6 +18,7 @@ from io_bench.utilities.parsing import (
     FeatherParser, 
     ArrowFeatherParser
 )
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
 
 class IOBench:
     def __init__(
@@ -45,6 +48,7 @@ class IOBench:
         self.output_dir = output_dir
         self.runs = runs
         self.benchmark_counter = 0
+        self.console = Console()
 
         self.avro_dir = os.path.join(output_dir, 'avro')
         self.parquet_dir = os.path.join(output_dir, 'parquet')
@@ -62,6 +66,7 @@ class IOBench:
         self.parsers = parsers if parsers is not None else list(self.available_parsers.keys())
         self.selected_parsers = {name: self.available_parsers[name] for name in self.parsers if name in self.available_parsers}
 
+
     def gen_sample_data(self, records: int = 100000) -> None:
         """
         Generate sample data and save it to the source file.
@@ -69,6 +74,10 @@ class IOBench:
         Args:
             records (int): Number of records to generate.
         """
+        if os.path.exists(self.source_file):
+            self.console.print(f"[yellow]Source file '{self.source_file}' already exists. Skipping data generation.")
+            return
+
         data = {
             'Region': ['North America', 'Europe', 'Asia'] * (records // 3),
             'Country': ['USA', 'Germany', 'China'] * (records // 3),
@@ -80,19 +89,80 @@ class IOBench:
         df = pd.DataFrame(data)
         
         os.makedirs(os.path.dirname(self.source_file), exist_ok=True)
-        
-        df.to_csv(self.source_file, index=False)
+        with self.console.status(f'[cyan]Generating {records} records of data ...', spinner='bouncingBar'):
+            df.to_csv(self.source_file, index=False)
 
-    def partition(self, size_mb: int = 10) -> None:
+    def clear_partitions(self) -> None:
+        """
+        Clear the partition folders by deleting all files in the avro, parquet, and feather directories.
+        """
+        for directory in [self.avro_dir, self.parquet_dir, self.feather_dir]:
+            for filename in os.listdir(directory):
+                file_path = os.path.join(directory, filename)
+                try:
+                    if os.path.isfile(file_path) or os.path.islink(file_path):
+                        os.unlink(file_path)
+                    elif os.path.isdir(file_path):
+                        os.rmdir(file_path)
+                except Exception as e:
+                    self.console.print(f"[red]Failed to delete {file_path}. Reason: {e}")
+
+
+    # def partition(self, size_mb: int = 10) -> None:
+    #     """
+    #     Convert the source file to partitioned formats.
+
+    #     Args:
+    #         size_mb (int): Size of each partition in MB.
+    #     """
+    #     with self.console.status(f'[cyan]Partitioning data ...', spinner='bouncingBar'):
+    #         asyncio.run(self._partition(size_mb))
+
+    # async def _partition(self, size_mb: int = 10) -> None:
+    #     df = pd.read_csv(self.source_file)
+        
+    #     os.makedirs(self.avro_dir, exist_ok=True)
+    #     os.makedirs(self.parquet_dir, exist_ok=True)
+    #     os.makedirs(self.feather_dir, exist_ok=True)
+        
+    #     partition_size = size_mb * 1024 * 1024
+    #     record_size = df.memory_usage(deep=True).sum() // len(df)
+    #     records_per_partition = partition_size // record_size
+        
+    #     tasks = []
+    #     for i in range(0, len(df), records_per_partition):
+    #         partition_df = df.iloc[i:i + records_per_partition]
+    #         part_number = i // records_per_partition
+            
+    #         if 'avro' in self.parsers:
+    #             tasks.append(self._write_avro(partition_df, os.path.join(self.avro_dir, f'part_{part_number}.avro')))
+    #         if any(parser in self.parsers for parser in ['parquet_polars', 'parquet_arrow', 'parquet_fast']):
+    #             tasks.append(self._write_parquet(partition_df, os.path.join(self.parquet_dir, f'part_{part_number}.parquet')))
+    #         if any(parser in self.parsers for parser in ['feather', 'feather_arrow']):
+    #             tasks.append(self._write_feather(partition_df, os.path.join(self.feather_dir, f'part_{part_number}.feather')))
+        
+    #     await asyncio.gather(*tasks)
+
+
+    def partition(
+        self, 
+        size_mb: int = 10, 
+        chunk_sizes: Optional[Dict[str, int]] = {
+            'avro': 1000,
+            'parquet': 10000,
+            'feather': 1000
+        }
+    ) -> None:
         """
         Convert the source file to partitioned formats.
 
         Args:
             size_mb (int): Size of each partition in MB.
+            chunk_sizes (Optional[Dict[str, int]]): Dictionary of chunk sizes for each format.
         """
-        asyncio.run(self._partition(size_mb))
+        asyncio.run(self._partition(size_mb, chunk_sizes))
 
-    async def _partition(self, size_mb: int = 10) -> None:
+    async def _partition(self, size_mb: int, chunk_sizes: Dict[str, int]) -> None:
         df = pd.read_csv(self.source_file)
         
         os.makedirs(self.avro_dir, exist_ok=True)
@@ -100,23 +170,85 @@ class IOBench:
         os.makedirs(self.feather_dir, exist_ok=True)
         
         partition_size = size_mb * 1024 * 1024
-        record_size = df.memory_usage(deep=True).sum() // len(df)
-        records_per_partition = partition_size // record_size
         
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TimeElapsedColumn(),
+        ) as progress:
+            partition_ranges = {}
+            for parser_type in ['avro', 'parquet', 'feather']:
+                if parser_type == 'avro' and 'avro' in self.parsers:
+                    task = progress.add_task(f"[cyan]Finding {parser_type} partition ranges...", total=len(df))
+                    partition_ranges['avro'] = await self._find_partition_ranges(df, partition_size, 'avro', chunk_sizes['avro'], progress, task)
+                elif parser_type == 'parquet' and any(parser in self.parsers for parser in ['parquet_polars', 'parquet_arrow', 'parquet_fast']):
+                    task = progress.add_task(f"[cyan]Finding {parser_type} partition ranges...", total=len(df))
+                    partition_ranges['parquet'] = await self._find_partition_ranges(df, partition_size, 'parquet', chunk_sizes['parquet'], progress, task)
+                elif parser_type == 'feather' and any(parser in self.parsers for parser in ['feather', 'feather_arrow']):
+                    task = progress.add_task(f"[cyan]Finding {parser_type} partition ranges...", total=len(df))
+                    partition_ranges['feather'] = await self._find_partition_ranges(df, partition_size, 'feather', chunk_sizes['feather'], progress, task)
         tasks = []
-        for i in range(0, len(df), records_per_partition):
-            partition_df = df.iloc[i:i + records_per_partition]
-            part_number = i // records_per_partition
-            
-            if 'avro' in self.parsers:
-                tasks.append(self._write_avro(partition_df, os.path.join(self.avro_dir, f'part_{part_number}.avro')))
-            if any(parser in self.parsers for parser in ['parquet_polars', 'parquet_arrow', 'parquet_fast']):
-                tasks.append(self._write_parquet(partition_df, os.path.join(self.parquet_dir, f'part_{part_number}.parquet')))
-            if any(parser in self.parsers for parser in ['feather', 'feather_arrow']):
-                tasks.append(self._write_feather(partition_df, os.path.join(self.feather_dir, f'part_{part_number}.feather')))
+        with self.console.status(f'[cyan]Writing partitions...', spinner='bouncingBar'):
+            for parser_type, ranges in partition_ranges.items():
+                for part_number, (start_idx, end_idx) in enumerate(ranges):
+                    partition_df = df.iloc[start_idx:end_idx]
+                    if parser_type == 'avro':
+                        tasks.append(self._write_avro(partition_df, os.path.join(self.avro_dir, f'part_{part_number}.avro')))
+                    elif parser_type == 'parquet':
+                        for parser in ['parquet_polars', 'parquet_arrow', 'parquet_fast']:
+                            if parser in self.parsers:
+                                tasks.append(self._write_parquet(partition_df, os.path.join(self.parquet_dir, f'{parser}_part_{part_number}.parquet')))
+                    elif parser_type == 'feather':
+                        for parser in ['feather', 'feather_arrow']:
+                            if parser in self.parsers:
+                                tasks.append(self._write_feather(partition_df, os.path.join(self.feather_dir, f'{parser}_part_{part_number}.feather')))
         
-        await asyncio.gather(*tasks)
+            await asyncio.gather(*tasks)
 
+    async def _find_partition_ranges(self, df: pd.DataFrame, target_size: int, parser: str, chunk_size: int, progress: Progress, task: int) -> List[tuple]:
+        partition_ranges = []
+        start_idx = 0
+        while start_idx < len(df):
+            end_idx = await self._find_partition_end_index(df, start_idx, target_size, parser, chunk_size)
+            if end_idx == start_idx:  # Break if no progress is made
+                break
+            partition_ranges.append((start_idx, end_idx))
+            progress.update(task, completed=end_idx)
+            start_idx = end_idx
+        if not partition_ranges:  # Handle case where no partitions were added
+            partition_ranges.append((0, len(df)))
+        return partition_ranges
+
+    async def _find_partition_end_index(self, df: pd.DataFrame, start_idx: int, target_size: int, parser: str, chunk_size: int) -> int:
+        end_idx = start_idx
+        current_size = 0
+
+        while end_idx < len(df) and current_size < target_size:
+            next_end_idx = min(end_idx + chunk_size, len(df))
+            partition_df = df.iloc[end_idx:next_end_idx]
+            
+            with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+                tmp_size = await self._write_temp_file(partition_df, tmp_file.name, parser)
+                current_size += tmp_size
+            
+            if current_size > target_size and end_idx > start_idx:
+                break
+            
+            end_idx = next_end_idx
+
+        return end_idx if end_idx > start_idx else len(df)
+
+    async def _write_temp_file(self, df: pd.DataFrame, tmp_file: str, parser: str) -> int:
+        if parser == 'avro':
+            await self._write_avro(df, tmp_file)
+        elif parser.startswith('parquet'):
+            await self._write_parquet(df, tmp_file)
+        elif parser.startswith('feather'):
+            await self._write_feather(df, tmp_file)
+        
+        return os.path.getsize(tmp_file)
+        
     async def _write_avro(self, df: pd.DataFrame, file_path: str) -> None:
         """
         Write a DataFrame to an Avro file.

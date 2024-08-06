@@ -31,7 +31,7 @@ def generate_report(benchmark_results: List['IOBench'], dir: str) -> None:
         for bench in results:
             data[f'id{suffix}'].append(f'{bench.id}: {bench.summary["total_rows"]} rows')
             for metric in summary_metrics:
-                data[f"{metric}{suffix}"].append(bench.summary[metric])
+                data[f"{metric}{suffix}"].append(float(bench.summary[metric]))
         return data
 
     for suffix in suffixes:

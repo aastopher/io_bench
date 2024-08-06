@@ -8,6 +8,7 @@ coverage.xml
 
 # dev
 main.py
+tmp_partition*
 box/*
 data/
 results/
