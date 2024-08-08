@@ -67,7 +67,7 @@ class IOBench:
         self.selected_parsers = {name: self.available_parsers[name] for name in self.parsers if name in self.available_parsers}
 
 
-    def gen_sample_data(self, records: int = 100000) -> None:
+    def generate_sample(self, records: int = 100000) -> None:
         """
         Generate sample data and save it to the source file.
 
@@ -107,43 +107,6 @@ class IOBench:
                 except Exception as e:
                     self.console.print(f"[red]Failed to delete {file_path}. Reason: {e}")
 
-
-    # def partition(self, size_mb: int = 10) -> None:
-    #     """
-    #     Convert the source file to partitioned formats.
-
-    #     Args:
-    #         size_mb (int): Size of each partition in MB.
-    #     """
-    #     with self.console.status(f'[cyan]Partitioning data ...', spinner='bouncingBar'):
-    #         asyncio.run(self._partition(size_mb))
-
-    # async def _partition(self, size_mb: int = 10) -> None:
-    #     df = pd.read_csv(self.source_file)
-        
-    #     os.makedirs(self.avro_dir, exist_ok=True)
-    #     os.makedirs(self.parquet_dir, exist_ok=True)
-    #     os.makedirs(self.feather_dir, exist_ok=True)
-        
-    #     partition_size = size_mb * 1024 * 1024
-    #     record_size = df.memory_usage(deep=True).sum() // len(df)
-    #     records_per_partition = partition_size // record_size
-        
-    #     tasks = []
-    #     for i in range(0, len(df), records_per_partition):
-    #         partition_df = df.iloc[i:i + records_per_partition]
-    #         part_number = i // records_per_partition
-            
-    #         if 'avro' in self.parsers:
-    #             tasks.append(self._write_avro(partition_df, os.path.join(self.avro_dir, f'part_{part_number}.avro')))
-    #         if any(parser in self.parsers for parser in ['parquet_polars', 'parquet_arrow', 'parquet_fast']):
-    #             tasks.append(self._write_parquet(partition_df, os.path.join(self.parquet_dir, f'part_{part_number}.parquet')))
-    #         if any(parser in self.parsers for parser in ['feather', 'feather_arrow']):
-    #             tasks.append(self._write_feather(partition_df, os.path.join(self.feather_dir, f'part_{part_number}.feather')))
-        
-    #     await asyncio.gather(*tasks)
-
-
     def partition(
         self, 
         size_mb: int = 10, 
@@ -161,6 +124,12 @@ class IOBench:
             chunk_sizes (Optional[Dict[str, int]]): Dictionary of chunk sizes for each format.
         """
         asyncio.run(self._partition(size_mb, chunk_sizes))
+
+    def _collect_efficiency(self, ranges, sizes):
+        metrics = {}
+        for key, value in ranges.items():
+            metrics[key] = value[0][1]
+        self.console.print(metrics)
 
     async def _partition(self, size_mb: int, chunk_sizes: Dict[str, int]) -> None:
         df = pd.read_csv(self.source_file)
@@ -188,6 +157,10 @@ class IOBench:
                 elif parser_type == 'feather' and any(parser in self.parsers for parser in ['feather', 'feather_arrow']):
                     task = progress.add_task(f"[cyan]Finding {parser_type} partition ranges...", total=len(df))
                     partition_ranges['feather'] = await self._find_partition_ranges(df, partition_size, 'feather', chunk_sizes['feather'], progress, task)
+
+        # automatically clean up partitions from previous runs
+        self.clear_partitions()
+        
         tasks = []
         with self.console.status(f'[cyan]Writing partitions...', spinner='bouncingBar'):
             for parser_type, ranges in partition_ranges.items():
@@ -205,6 +178,7 @@ class IOBench:
                                 tasks.append(self._write_feather(partition_df, os.path.join(self.feather_dir, f'{parser}_part_{part_number}.feather')))
         
             await asyncio.gather(*tasks)
+            self._collect_efficiency(partition_ranges, [])
 
     async def _find_partition_ranges(self, df: pd.DataFrame, target_size: int, parser: str, chunk_size: int, progress: Progress, task: int) -> List[tuple]:
         partition_ranges = []
@@ -234,7 +208,7 @@ class IOBench:
             
             if current_size > target_size and end_idx > start_idx:
                 break
-            
+                
             end_idx = next_end_idx
 
         return end_idx if end_idx > start_idx else len(df)
@@ -294,7 +268,7 @@ class IOBench:
         table = pa.Table.from_pandas(df)
         feather.write_feather(table, file_path)
 
-    def run_battery(self, columns: Optional[List[str]] = None, suffix: Optional[str] = None) -> List[Bench]:
+    def battery(self, columns: Optional[List[str]] = None, suffix: Optional[str] = None) -> List[Bench]:
         """
         Run benchmarks using the specified parsers.
 
@@ -317,7 +291,7 @@ class IOBench:
         
         return benchmarks
 
-    def gen_report(self, benchmark_results: List[Bench], report_dir: str = './result') -> None:
+    def report(self, benchmark_results: List[Bench], report_dir: str = './result') -> None:
         """
         Generate a report from benchmark results.
 

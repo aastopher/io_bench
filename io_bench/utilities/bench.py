@@ -125,7 +125,7 @@ class IOBench:
                 end_benchmark_time = time.perf_counter()
 
                 rows.append(len(raw_data))
-                params.append(sum(len(row) for row in raw_data.rows()))
+                params.append(len(raw_data) * len(raw_data.columns))
                 times.append(end_benchmark_time - start_benchmark_time)
 
                 progress.update(run_task, advance=1)
@@ -137,6 +137,7 @@ class IOBench:
 
         total_time = sum(times)
         mean_time_per_row = statistics.mean(times) / statistics.mean(rows) if rows else 0
+        mean_time_per_param = statistics.mean(times) / statistics.mean(params) if rows else 0
         mean_cpu_usage = statistics.mean([metric['cpu_usage'] for metric in monitor.metrics])
         mean_thread_count = statistics.mean([metric['total_threads'] for metric in monitor.metrics])
         rows_per_sec = statistics.mean(rows) / statistics.mean(times) if times else 0
@@ -146,11 +147,13 @@ class IOBench:
             'id': self.id,
             'total_time': total_time,
             'mean_time_per_row': mean_time_per_row,
+            'mean_time_per_param': mean_time_per_param,
             'mean_cpu_usage': mean_cpu_usage,
             'mean_thread_count': mean_thread_count,
             'rows_per_sec': rows_per_sec,
             'params_per_sec': params_per_sec,
             'total_rows': sum(rows),
+            'total_params': sum(params),
             'max_thread_count': max([metric['total_threads'] for metric in monitor.metrics]),
             'max_cpu_usage': max([metric['cpu_usage'] for metric in monitor.metrics]),
         }

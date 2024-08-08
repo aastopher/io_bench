@@ -16,9 +16,9 @@ def generate_report(benchmark_results: List['IOBench'], dir: str) -> None:
         dir (str): Directory to save the report.
     """
     summary_metrics = [
-        'total_time', 'mean_time_per_row', 'mean_cpu_usage', 
-        'mean_thread_count', 'rows_per_sec', 'params_per_sec', 
-        'total_rows', 'max_thread_count', 'max_cpu_usage'
+        'total_time', 'mean_time_per_param', 'mean_cpu_usage', 
+        'mean_thread_count', 'params_per_sec', 'total_params' , 
+        'max_thread_count', 'max_cpu_usage'
     ]
 
     # Separate results based on suffix
@@ -29,7 +29,7 @@ def generate_report(benchmark_results: List['IOBench'], dir: str) -> None:
         data = {f"{metric}{suffix}": [] for metric in summary_metrics}
         data[f'id{suffix}'] = []
         for bench in results:
-            data[f'id{suffix}'].append(f'{bench.id}: {bench.summary["total_rows"]} rows')
+            data[f'id{suffix}'].append(f'{bench.id}: {bench.summary["total_params"]} params')
             for metric in summary_metrics:
                 data[f"{metric}{suffix}"].append(float(bench.summary[metric]))
         return data

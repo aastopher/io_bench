@@ -47,20 +47,20 @@ io_bench.partition(size_mb=10)
 ### Running Benchmarks
 Run benchmarks without column selection:
 ```python
-benchmarks_no_columns = io_bench.run_battery(suffix='_no_columns')
+benchmarks_no_columns = io_bench.battery(suffix='_no_columns')
 ```
 
 Run benchmarks with column selection:
 ```python
 columns = ['Region', 'Country', 'Total Cost']
-benchmarks_with_columns = io_bench.run_battery(columns=columns, suffix='_with_columns')
+benchmarks_with_columns = io_bench.battery(columns=columns, suffix='_with_columns')
 ```
 
 ### Generating Reports
 Combine results and generate the final report:
 ```python
 all_benchmarks = benchmarks_no_columns + benchmarks_with_columns
-io_bench.gen_report(all_benchmarks, report_dir='./result')
+io_bench.report(all_benchmarks, report_dir='./result')
 ```
 
 ### Full Example
@@ -80,15 +80,15 @@ def main() -> None:
     io_bench.partition(size_mb=10)
 
     # Run benchmarks without column selection
-    benchmarks_no_columns = io_bench.run_battery(suffix='_no_columns')
+    benchmarks_no_columns = io_bench.battery(suffix='_no_columns')
 
     # Run benchmarks with column selection
     columns = ['Region', 'Country', 'Total Cost']
-    benchmarks_with_columns = io_bench.run_battery(columns=columns, suffix='_with_columns')
+    benchmarks_with_columns = io_bench.battery(columns=columns, suffix='_with_columns')
 
     # Combine results and generate the final report
     all_benchmarks = benchmarks_no_columns + benchmarks_with_columns
-    io_bench.gen_report(all_benchmarks, report_dir='./result')
+    io_bench.report(all_benchmarks, report_dir='./result')
 
 if __name__ == "__main__":
     main()

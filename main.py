@@ -26,22 +26,22 @@ def main() -> None:
     )
 
     # Generate sample data (if needed)
-    io_bench.gen_sample_data(3000000)
+    io_bench.generate_sample(3000000)
 
     # Convert the source file to partitioned formats
     io_bench.partition(size_mb=10)
     # io_bench.partition(size_mb=10)
 
     # Run benchmarks without column selection
-    benchmarks_no_columns = io_bench.run_battery(suffix='_no_columns')
+    benchmarks_no_select = io_bench.battery(suffix='_no_select')
 
     # Run benchmarks with column selection
     columns = ['Region', 'Country', 'Total Cost']
-    benchmarks_with_columns = io_bench.run_battery(columns=columns, suffix='_with_columns')
+    benchmarks_column_select = io_bench.battery(columns=columns, suffix='_column_select')
 
     # Combine results and generate the final report
-    all_benchmarks = benchmarks_no_columns + benchmarks_with_columns
-    io_bench.gen_report(all_benchmarks, report_dir='./result')
+    all_benchmarks = benchmarks_no_select + benchmarks_column_select
+    io_bench.report(all_benchmarks, report_dir='./result')
 
     # io_bench.clear_partitions()
 
