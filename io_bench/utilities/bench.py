@@ -1,3 +1,4 @@
+import os
 import time
 import threading
 import psutil
@@ -109,12 +110,12 @@ class IOBench:
         rows = []
         params = []
         times = []
+        sizes = []
 
         with Progress() as progress:
             run_task = progress.add_task(f'[green]Benchmarking {self.parser.__class__.__name__}', total=self.num_runs)
 
             for i in range(self.num_runs):
-                # progress.update(run_task, description=f'[magenta]({i+1}/{self.num_runs}) - [green]{self.parser.__class__.__name__}: [blue]Reading files...')
                 progress.update(run_task, description=f'[magenta]({i+1}/{self.num_runs}) - [green]{self.id}: [blue]Reading files...')
 
                 start_benchmark_time = time.perf_counter()
@@ -127,21 +128,25 @@ class IOBench:
                 rows.append(len(raw_data))
                 params.append(len(raw_data) * len(raw_data.columns))
                 times.append(end_benchmark_time - start_benchmark_time)
+                sizes.append(sum(os.path.getsize(f) for f in self.parser.file_paths))
 
                 progress.update(run_task, advance=1)
 
         monitor.stop()  # Stop continuous monitoring
 
-        # Use the collected metrics directly
         self.polling_metrics = monitor.metrics
 
         total_time = sum(times)
-        mean_time_per_row = statistics.mean(times) / statistics.mean(rows) if rows else 0
-        mean_time_per_param = statistics.mean(times) / statistics.mean(params) if rows else 0
+        total_rows = sum(rows)
+        total_params = sum(params)
+        total_size = sum(sizes)
+        mean_time_per_row = total_time / total_rows if total_rows else 0
+        mean_time_per_param = total_time / total_params if total_params else 0
         mean_cpu_usage = statistics.mean([metric['cpu_usage'] for metric in monitor.metrics])
         mean_thread_count = statistics.mean([metric['total_threads'] for metric in monitor.metrics])
-        rows_per_sec = statistics.mean(rows) / statistics.mean(times) if times else 0
-        params_per_sec = statistics.mean(params) / statistics.mean(times) if times else 0
+        rows_per_sec = total_rows / total_time if total_time else 0
+        params_per_sec = total_params / total_time if total_time else 0
+        params_per_mb = total_params / (total_size / (1024 * 1024)) if total_size else 0
 
         self.summary = {
             'id': self.id,
@@ -152,10 +157,11 @@ class IOBench:
             'mean_thread_count': mean_thread_count,
             'rows_per_sec': rows_per_sec,
             'params_per_sec': params_per_sec,
-            'total_rows': sum(rows),
-            'total_params': sum(params),
+            'total_rows': total_rows,
+            'total_params': total_params,
             'max_thread_count': max([metric['total_threads'] for metric in monitor.metrics]),
             'max_cpu_usage': max([metric['cpu_usage'] for metric in monitor.metrics]),
+            'params_per_mb': params_per_mb
         }
 
         return self

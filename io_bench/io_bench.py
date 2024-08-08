@@ -125,12 +125,6 @@ class IOBench:
         """
         asyncio.run(self._partition(size_mb, chunk_sizes))
 
-    def _collect_efficiency(self, ranges, sizes):
-        metrics = {}
-        for key, value in ranges.items():
-            metrics[key] = value[0][1]
-        self.console.print(metrics)
-
     async def _partition(self, size_mb: int, chunk_sizes: Dict[str, int]) -> None:
         df = pd.read_csv(self.source_file)
         
@@ -178,7 +172,6 @@ class IOBench:
                                 tasks.append(self._write_feather(partition_df, os.path.join(self.feather_dir, f'{parser}_part_{part_number}.feather')))
         
             await asyncio.gather(*tasks)
-            self._collect_efficiency(partition_ranges, [])
 
     async def _find_partition_ranges(self, df: pd.DataFrame, target_size: int, parser: str, chunk_size: int, progress: Progress, task: int) -> List[tuple]:
         partition_ranges = []

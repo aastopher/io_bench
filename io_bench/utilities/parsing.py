@@ -52,6 +52,7 @@ class PolarsParquetParser:
         Returns:
             pl.DataFrame: Combined DataFrame from Parquet files.
         """
+        self.file_paths = glob.glob(os.path.join(self.dir, "*"))
         return pl.read_parquet(f'{self.dir}/*.parquet', columns=columns)
 
 class ArrowParquetParser:
