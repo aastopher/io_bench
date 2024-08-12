@@ -140,8 +140,6 @@ class IOBench:
         total_rows = sum(rows)
         total_params = sum(params)
         total_size = sum(sizes)
-        mean_time_per_row = total_time / total_rows if total_rows else 0
-        mean_time_per_param = total_time / total_params if total_params else 0
         mean_cpu_usage = statistics.mean([metric['cpu_usage'] for metric in monitor.metrics])
         mean_thread_count = statistics.mean([metric['total_threads'] for metric in monitor.metrics])
         rows_per_sec = total_rows / total_time if total_time else 0
@@ -151,8 +149,6 @@ class IOBench:
         self.summary = {
             'id': self.id,
             'total_time': total_time,
-            'mean_time_per_row': mean_time_per_row,
-            'mean_time_per_param': mean_time_per_param,
             'mean_cpu_usage': mean_cpu_usage,
             'mean_thread_count': mean_thread_count,
             'rows_per_sec': rows_per_sec,

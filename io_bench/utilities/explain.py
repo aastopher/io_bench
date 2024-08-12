@@ -47,7 +47,7 @@ def generate_report(benchmark_results: List['IOBench'], dir: str) -> None:
 
     for metric in summary_metrics:
         fig = px.bar(summary_df.to_pandas(), x='parser_id', y=metric, color='parser_id', title=f'{metric.replace("_", " ").title()} by Parser')
-        summary_report_html += f"<div>{fig.to_html(full_html=False)}</div>"
+        summary_report_html += f"</br><div>{fig.to_html(full_html=False)}</div>"
 
     summary_report_html += "</body></html>"
 
