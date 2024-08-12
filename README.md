@@ -57,10 +57,10 @@ def main() -> None:
     # Initialize the IOBench object with runs and parsers
     io_bench = IOBench(source_file='./data/source_100K.csv', runs=20, parsers=['avro', 'parquet_polars'])
 
-    # Generate sample data (if needed)
+    # Generate sample data - (optional)
     io_bench.generate_sample()
 
-    # Convert the source file to partitioned formats
+    # Convert the source file to partitioned formats  - (optional)
     io_bench.partition(rows={'avro': 500000, 'parquet': 3000000, 'feather': 1600000})
 
     # Run benchmarks without column selection
