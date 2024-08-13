@@ -238,7 +238,7 @@ class IOBench:
         table = pa.Table.from_pandas(df)
         feather.write_feather(table, file_path)
 
-    def battery(self, columns: Optional[List[str]] = None, suffix: Optional[str] = None) -> List[Bench]:
+    def run(self, columns: Optional[List[str]] = None, suffix: Optional[str] = None) -> List[Bench]:
         """
         Run benchmarks using the specified parsers.
 

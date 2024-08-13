@@ -2,7 +2,7 @@ from io_bench import IOBench
 
 def main() -> None:
     # Initialize the IOBench object with runs and parsers
-    # io_bench = IOBench(
+    # bench = IOBench(
     #     source_file='./data/source.csv', 
     #     runs=10, 
     #     parsers=[
@@ -15,7 +15,7 @@ def main() -> None:
     #         ]
     # )
 
-    io_bench = IOBench(
+    bench = IOBench(
         source_file='./data/source.csv', 
         runs=10, 
         parsers=[
@@ -26,21 +26,21 @@ def main() -> None:
     )
 
     # Generate sample data (if needed)
-    # io_bench.generate_sample(3000000)
+    # bench.generate_sample(3000000)
 
     # Convert the source file to partitioned formats
-    io_bench.partition()
+    # bench.partition()
 
-    # # Run benchmarks without column selection
-    # benchmarks_no_select = io_bench.battery(suffix='_no_select')
+    # Run benchmarks without column selection
+    benchmarks_no_select = bench.run(suffix='_no_select')
 
-    # # Run benchmarks with column selection
-    # columns = ['Region', 'Country', 'Total Cost']
-    # benchmarks_column_select = io_bench.battery(columns=columns, suffix='_column_select')
+    # Run benchmarks with column selection
+    columns = ['Region', 'Country', 'Total Cost']
+    benchmarks_column_select = bench.run(columns=columns, suffix='_column_select')
 
-    # # Combine results and generate the final report
-    # all_benchmarks = benchmarks_no_select + benchmarks_column_select
-    # io_bench.report(all_benchmarks, report_dir='./result')
+    # Combine results and generate the final report
+    all_benchmarks = benchmarks_no_select + benchmarks_column_select
+    bench.report(all_benchmarks, report_dir='./result')
 
 if __name__ == "__main__":
     main()

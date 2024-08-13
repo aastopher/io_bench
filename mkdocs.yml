@@ -10,4 +10,4 @@ plugins:
 nav:
   - IOBench Docs: index.md
   - Quick Start: quick_start.md
-  - IOBench: io_bench.md
+  - Source: source.md
