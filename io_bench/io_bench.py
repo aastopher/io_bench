@@ -284,4 +284,4 @@ class IOBench:
             benchmark_results (List[Bench]): List of benchmark results.
             report_dir (str): Directory to save the report.
         """
-        generate_report(benchmark_results, dir=report_dir)
+        generate_report(benchmark_results, report_dir)

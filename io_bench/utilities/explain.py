@@ -6,13 +6,13 @@ from typing import List
 
 console = Console()
 
-def generate_report(benchmark_results: List['IOBench'], dir: str) -> None:
+def generate_report(benchmark_results: List['IOBench'], directory: str) -> None:
     """
     Generate a report from benchmark results.
 
     Args:
         benchmark_results (List[IOBench]): List of benchmark results.
-        dir (str): Directory to save the report.
+        directory (str): Directory to save the report.
     """
 
     summary_metrics = [
@@ -50,8 +50,8 @@ def generate_report(benchmark_results: List['IOBench'], dir: str) -> None:
 
     summary_report_html += "</body></html>"
 
-    os.makedirs(dir, exist_ok=True)
-    with open(f'{dir}/summary_report.html', 'w') as f:
+    os.makedirs(directory, exist_ok=True)
+    with open(f'{directory}/summary_report.html', 'w') as f:
         f.write(summary_report_html)
 
     # Prepare data polling metrics
@@ -81,5 +81,5 @@ def generate_report(benchmark_results: List['IOBench'], dir: str) -> None:
 
     polling_report_html += "</body></html>"
 
-    with open(f'{dir}/polling_report.html', 'w') as f:
+    with open(f'{directory}/polling_report.html', 'w') as f:
         f.write(polling_report_html)

@@ -11,6 +11,7 @@ class AvroParser:
             dir (str): Directory containing Avro files.
         """
         self.dir = dir
+        self.file_paths = None
 
     def to_polars(self, columns: Optional[List[str]] = None) -> pl.DataFrame:
         """
@@ -37,6 +38,7 @@ class PolarsParquetParser:
             dir (str): Directory containing Parquet files.
         """
         self.dir = dir
+        self.file_paths = None
         
     def to_polars(self, columns: Optional[List[str]] = None) -> pl.DataFrame:
         """
@@ -60,6 +62,7 @@ class ArrowParquetParser:
             dir (str): Directory containing Parquet files.
         """
         self.dir = dir
+        self.file_paths = None
 
     def to_polars(self, columns: Optional[List[str]] = None) -> pl.DataFrame:
         """
@@ -86,6 +89,7 @@ class FastParquetParser:
             dir (str): Directory containing Parquet files.
         """
         self.dir = dir
+        self.file_paths = None
 
     def to_polars(self, columns: Optional[List[str]] = None) -> pl.DataFrame:
         """
@@ -112,6 +116,7 @@ class FeatherParser:
             dir (str): Directory containing Feather files.
         """
         self.dir = dir
+        self.file_paths = None
 
     def to_polars(self, columns: Optional[List[str]] = None) -> pl.DataFrame:
         """
@@ -138,6 +143,7 @@ class ArrowFeatherParser:
             dir (str): Directory containing Feather files.
         """
         self.dir = dir
+        self.file_paths = None
 
     def to_polars(self, columns: Optional[List[str]] = None) -> pl.DataFrame:
         """
