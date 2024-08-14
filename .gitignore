@@ -34,6 +34,7 @@ requirements_*.txt
 **/dist
 **/docs/build
 **/_build
+**/build
 .vscode/*
 .python-version
 
