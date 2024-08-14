@@ -5,11 +5,7 @@ on:
       - main
       - stage
       - '*.*.*'
-  pull_request:
-    branches:
-      - main
-      - stage
-      - '*.*.*'
+
 jobs:
   build-and-test:
     name: Build and Test
