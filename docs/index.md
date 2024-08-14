@@ -8,7 +8,3 @@ IO Bench is a library designed to benchmark the performance of different file fo
 - Convert CSV data to various partitioned formats (Avro, Parquet, Feather).
 - Benchmark reading performance of different file formats using Polars, PyArrow, and FastParquet.
 - Generate comprehensive reports of benchmark results.
-
-## Installation
-
-- TODO
