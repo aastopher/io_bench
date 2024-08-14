@@ -5,12 +5,12 @@ from typing import List, Optional
 from fastparquet import ParquetFile
 
 class AvroParser:
-    def __init__(self, dir: str) -> None:
+    def __init__(self, directory: str) -> None:
         """
         Args:
-            dir (str): Directory containing Avro files.
+            directory (str): Directory containing Avro files.
         """
-        self.dir = dir
+        self.directory = directory
         self.file_paths = None
 
     def to_polars(self, columns: Optional[List[str]] = None) -> pl.DataFrame:
@@ -23,7 +23,7 @@ class AvroParser:
         Returns:
             pl.DataFrame: Combined DataFrame from Avro files.
         """
-        self.file_paths = glob.glob(os.path.join(self.dir, "*"))
+        self.file_paths = glob.glob(os.path.join(self.directory, "*"))
         dfs = [pl.read_avro(file, columns=columns) for file in self.file_paths]
         if dfs:
             combined_df = pl.concat(dfs, how="diagonal_relaxed", parallel=True)
@@ -32,12 +32,12 @@ class AvroParser:
         return combined_df
 
 class PolarsParquetParser:
-    def __init__(self, dir: str) -> None:
+    def __init__(self, directory: str) -> None:
         """
         Args:
-            dir (str): Directory containing Parquet files.
+            directory (str): Directory containing Parquet files.
         """
-        self.dir = dir
+        self.directory = directory
         self.file_paths = None
         
     def to_polars(self, columns: Optional[List[str]] = None) -> pl.DataFrame:
@@ -50,18 +50,18 @@ class PolarsParquetParser:
         Returns:
             pl.DataFrame: Combined DataFrame from Parquet files.
         """
-        self.file_paths = glob.glob(os.path.join(self.dir, "*"))
+        self.file_paths = glob.glob(os.path.join(self.directory, "*"))
         if not self.file_paths:
             raise FileNotFoundError('No data collected!')
-        return pl.read_parquet(f'{self.dir}/*.parquet', columns=columns)
+        return pl.read_parquet(f'{self.directory}/*.parquet', columns=columns)
 
 class ArrowParquetParser:
-    def __init__(self, dir: str) -> None:
+    def __init__(self, directory: str) -> None:
         """
         Args:
-            dir (str): Directory containing Parquet files.
+            directory (str): Directory containing Parquet files.
         """
-        self.dir = dir
+        self.directory = directory
         self.file_paths = None
 
     def to_polars(self, columns: Optional[List[str]] = None) -> pl.DataFrame:
@@ -74,7 +74,7 @@ class ArrowParquetParser:
         Returns:
             pl.DataFrame: Combined DataFrame from Parquet files.
         """
-        self.file_paths = glob.glob(os.path.join(self.dir, "*"))
+        self.file_paths = glob.glob(os.path.join(self.directory, "*"))
         dfs = [pl.read_parquet(file, columns=columns, use_pyarrow=True) for file in self.file_paths]
         if dfs:
             combined_df = pl.concat(dfs, how="diagonal_relaxed", parallel=True)
@@ -83,12 +83,12 @@ class ArrowParquetParser:
         return combined_df
 
 class FastParquetParser:
-    def __init__(self, dir: str) -> None:
+    def __init__(self, directory: str) -> None:
         """
         Args:
-            dir (str): Directory containing Parquet files.
+            directory (str): Directory containing Parquet files.
         """
-        self.dir = dir
+        self.directory = directory
         self.file_paths = None
 
     def to_polars(self, columns: Optional[List[str]] = None) -> pl.DataFrame:
@@ -101,7 +101,7 @@ class FastParquetParser:
         Returns:
             pl.DataFrame: Combined DataFrame from Parquet files.
         """
-        self.file_paths = glob.glob(os.path.join(self.dir, "*"))
+        self.file_paths = glob.glob(os.path.join(self.directory, "*"))
         dfs = [pl.from_pandas(ParquetFile(file).to_pandas(columns)) for file in self.file_paths]
         if dfs:
             combined_df = pl.concat(dfs, how="diagonal_relaxed", parallel=True)
@@ -110,12 +110,12 @@ class FastParquetParser:
         return combined_df
 
 class FeatherParser:
-    def __init__(self, dir: str) -> None:
+    def __init__(self, directory: str) -> None:
         """
         Args:
-            dir (str): Directory containing Feather files.
+            directory (str): Directory containing Feather files.
         """
-        self.dir = dir
+        self.directory = directory
         self.file_paths = None
 
     def to_polars(self, columns: Optional[List[str]] = None) -> pl.DataFrame:
@@ -128,7 +128,7 @@ class FeatherParser:
         Returns:
             pl.DataFrame: Combined DataFrame from Feather files.
         """
-        self.file_paths = glob.glob(os.path.join(self.dir, "*"))
+        self.file_paths = glob.glob(os.path.join(self.directory, "*"))
         dfs = [pl.read_ipc(file, columns=columns, memory_map=False) for file in self.file_paths]
         if dfs:
             combined_df = pl.concat(dfs, how="diagonal_relaxed", parallel=True)
@@ -137,12 +137,12 @@ class FeatherParser:
         return combined_df
 
 class ArrowFeatherParser:
-    def __init__(self, dir: str) -> None:
+    def __init__(self, directory: str) -> None:
         """
         Args:
-            dir (str): Directory containing Feather files.
+            directory (str): Directory containing Feather files.
         """
-        self.dir = dir
+        self.directory = directory
         self.file_paths = None
 
     def to_polars(self, columns: Optional[List[str]] = None) -> pl.DataFrame:
@@ -155,7 +155,7 @@ class ArrowFeatherParser:
         Returns:
             pl.DataFrame: Combined DataFrame from Feather files.
         """
-        self.file_paths = glob.glob(os.path.join(self.dir, "*"))
+        self.file_paths = glob.glob(os.path.join(self.directory, "*"))
         dfs = [pl.read_ipc(file, columns=columns, memory_map=False, use_pyarrow=True) for file in self.file_paths]
         if dfs:
             combined_df = pl.concat(dfs, how="diagonal_relaxed", parallel=True)

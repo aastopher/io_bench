@@ -18,6 +18,7 @@ class ContinuousMonitor:
         self.interval = interval
         self.active = True
         self.metrics = []
+        self.monitoring_thread = None
 
     def start(self) -> None:
         """
@@ -63,7 +64,7 @@ class ContinuousMonitor:
             Dict[int, int]: Mapping of process IDs to thread counts.
         """
         thread_count_map = {}
-        for pid in map(int, check_output(["pgrep", "-f", 'python']).split()):
+        for pid in map(int, check_output(["/usr/bin/pgrep", "-f", 'python']).split()):
             try:
                 thread_count_map[pid] = psutil.Process(pid).num_threads()
             except psutil.NoSuchProcess:
@@ -155,8 +156,8 @@ class IOBench:
             'params_per_sec': params_per_sec,
             'total_rows': total_rows,
             'total_params': total_params,
-            'max_thread_count': max([metric['total_threads'] for metric in monitor.metrics]),
-            'max_cpu_usage': max([metric['cpu_usage'] for metric in monitor.metrics]),
+            'max_thread_count': max(metric['total_threads'] for metric in monitor.metrics),
+            'max_cpu_usage': max(metric['cpu_usage'] for metric in monitor.metrics),
             'params_per_mb': params_per_mb
         }
 

@@ -10,32 +10,32 @@ def setup_empty_directory(tmpdir):
     return empty_dir
 
 def test_avro_parser_no_data(setup_empty_directory):
-    parser = AvroParser(dir=setup_empty_directory)
+    parser = AvroParser(directory=setup_empty_directory)
     with pytest.raises(FileNotFoundError, match="No data collected!"):
         parser.to_polars()
 
 def test_polars_parquet_parser_no_data(setup_empty_directory):
-    parser = PolarsParquetParser(dir=setup_empty_directory)
+    parser = PolarsParquetParser(directory=setup_empty_directory)
     with pytest.raises(FileNotFoundError, match="No data collected!"):
         parser.to_polars()
 
 def test_arrow_parquet_parser_no_data(setup_empty_directory):
-    parser = ArrowParquetParser(dir=setup_empty_directory)
+    parser = ArrowParquetParser(directory=setup_empty_directory)
     with pytest.raises(FileNotFoundError, match="No data collected!"):
         parser.to_polars()
 
 def test_fast_parquet_parser_no_data(setup_empty_directory):
-    parser = FastParquetParser(dir=setup_empty_directory)
+    parser = FastParquetParser(directory=setup_empty_directory)
     with pytest.raises(FileNotFoundError, match="No data collected!"):
         parser.to_polars()
 
 def test_feather_parser_no_data(setup_empty_directory):
-    parser = FeatherParser(dir=setup_empty_directory)
+    parser = FeatherParser(directory=setup_empty_directory)
     with pytest.raises(FileNotFoundError, match="No data collected!"):
         parser.to_polars()
 
 def test_arrow_feather_parser_no_data(setup_empty_directory):
-    parser = ArrowFeatherParser(dir=setup_empty_directory)
+    parser = ArrowFeatherParser(directory=setup_empty_directory)
     with pytest.raises(FileNotFoundError, match="No data collected!"):
         parser.to_polars()
 
