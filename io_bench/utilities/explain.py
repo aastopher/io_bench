@@ -52,10 +52,10 @@ def generate_report(benchmark_results: List['IOBench'], directory: str) -> None:
 
     os.makedirs(directory, exist_ok=True)
 
-    path = f'{directory}/summary_report.html'
-    os.path.exists(path)
+    summary_report_path = f'{directory}/summary_report.html'
+    os.path.exists(summary_report_path)
     
-    with open(path, 'w') as f:
+    with open(summary_report_path, 'w') as f:
         f.write(summary_report_html)
 
     # Prepare data polling metrics
@@ -85,5 +85,8 @@ def generate_report(benchmark_results: List['IOBench'], directory: str) -> None:
 
     polling_report_html += "</body></html>"
 
-    with open(f'{directory}/polling_report.html', 'w') as f:
+    polling_report_path = f'{directory}/polling_report.html'
+    os.path.exists(polling_report_path)
+
+    with open(polling_report_path, 'w') as f:
         f.write(polling_report_html)
