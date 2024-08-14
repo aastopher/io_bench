@@ -53,8 +53,7 @@ def generate_report(benchmark_results: List['IOBench'], directory: str) -> None:
     os.makedirs(directory, exist_ok=True)
 
     path = f'{directory}/summary_report.html'
-    if not path:
-        raise(f'{path} is not a valid file path')
+    os.path.exists(path)
     
     with open(path, 'w') as f:
         f.write(summary_report_html)
