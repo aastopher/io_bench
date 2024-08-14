@@ -66,7 +66,6 @@ class IOBench:
         self.parsers = parsers if parsers is not None else list(self.available_parsers.keys())
         self.selected_parsers = {name: self.available_parsers[name] for name in self.parsers if name in self.available_parsers}
 
-
     def generate_sample(self, records: int = 100000) -> None:
         """
         Generate sample data and save it to the source file.
@@ -78,19 +77,24 @@ class IOBench:
             self.console.print(f"[yellow]Source file '{self.source_file}' already exists. Skipping data generation.")
             return
 
+        # Calculate the exact number of repetitions needed for the records
+        base_repeats = records // 3
+        remainder = records % 3
+
         data = {
-            'Region': ['North America', 'Europe', 'Asia'] * (records // 3),
-            'Country': ['USA', 'Germany', 'China'] * (records // 3),
-            'Total Cost': [1000.0, 1500.5, 2000.75] * (records // 3),
-            'Sales': [5000.0, 7000.5, 9000.75] * (records // 3),
-            'Profit': [2500.0, 3500.5, 4500.75] * (records // 3)
+            'Region': (['North America', 'Europe', 'Asia'] * base_repeats) + ['North America', 'Europe', 'Asia'][:remainder],
+            'Country': (['USA', 'Germany', 'China'] * base_repeats) + ['USA', 'Germany', 'China'][:remainder],
+            'Total Cost': ([1000.0, 1500.5, 2000.75] * base_repeats) + [1000.0, 1500.5, 2000.75][:remainder],
+            'Sales': ([5000.0, 7000.5, 9000.75] * base_repeats) + [5000.0, 7000.5, 9000.75][:remainder],
+            'Profit': ([2500.0, 3500.5, 4500.75] * base_repeats) + [2500.0, 3500.5, 4500.75][:remainder]
         }
-        
+
         df = pd.DataFrame(data)
-        
+
         os.makedirs(os.path.dirname(self.source_file), exist_ok=True)
         with self.console.status(f'[cyan]Generating {records} records of data ...', spinner='bouncingBar'):
             df.to_csv(self.source_file, index=False)
+
 
     def clear_partitions(self) -> None:
         """
@@ -102,8 +106,6 @@ class IOBench:
                 try:
                     if os.path.isfile(file_path) or os.path.islink(file_path):
                         os.unlink(file_path)
-                    elif os.path.isdir(file_path):
-                        os.rmdir(file_path)
                 except Exception as e:
                     self.console.print(f"[red]Failed to delete {file_path}. Reason: {e}")
 
@@ -170,7 +172,6 @@ class IOBench:
         
         await asyncio.gather(*tasks)
 
-        
     def _calculate_partition_ranges(self, total_rows: int, row_chunks: int) -> List[tuple]:
         """
         Calculate the partition ranges given the total number of rows and chunk size.
@@ -182,17 +183,21 @@ class IOBench:
         Returns:
             List[tuple]: List of tuples where each tuple represents a start and end index for a partition.
         """
-        num_partitions = max(1, total_rows // row_chunks)  # Ensure at least one partition
+        num_partitions = max(1, (total_rows + row_chunks - 1) // row_chunks)  # Ensure at least one partition
         rows_per_partition = total_rows // num_partitions
+        remainder = total_rows % num_partitions
         
-        partition_ranges = [(i * rows_per_partition, min((i + 1) * rows_per_partition, total_rows))
-                            for i in range(num_partitions)]
-        
-        if partition_ranges[-1][1] < total_rows:  # In case there's a remainder
-            partition_ranges[-1] = (partition_ranges[-1][0], total_rows)
-        
+        partition_ranges = []
+        start_idx = 0
+
+        for i in range(num_partitions):
+            end_idx = start_idx + rows_per_partition + (1 if i < remainder else 0)
+            partition_ranges.append((start_idx, min(end_idx, total_rows)))
+            start_idx = end_idx
+            
         return partition_ranges
-        
+
+    
     async def _write_avro(self, df: pd.DataFrame, file_path: str) -> None:
         """
         Write a DataFrame to an Avro file.

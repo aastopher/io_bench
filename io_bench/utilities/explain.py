@@ -3,7 +3,6 @@ import plotly.express as px
 import polars as pl
 from rich.console import Console
 from typing import List
-from io_bench.utilities.helper import print_wide
 
 console = Console()
 
@@ -41,7 +40,7 @@ def generate_report(benchmark_results: List['IOBench'], dir: str) -> None:
     summary_df = pl.DataFrame(summary_data)
 
     console.print("Summary Metrics:")
-    print_wide(summary_df)
+    print(summary_df)
 
     summary_report_html = "<html><head></head><body>"
 
