@@ -7,7 +7,6 @@ import fastavro
 from typing import List, Dict, Optional
 import asyncio
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 from io_bench.utilities.bench import IOBench as Bench
 from io_bench.utilities.explain import generate_report
 from io_bench.utilities.parsing import (
@@ -25,14 +24,7 @@ class IOBench:
             source_file: str, 
             output_dir: str = './data', 
             runs: int = 10, 
-            parsers: Optional[List[str]] = [
-                'avro', 
-                'parquet_polars', 
-                'parquet_arrow', 
-                'parquet_fast', 
-                'feather', 
-                'feather_arrow'
-            ]
+            parsers: Optional[List[str]] = None
         ) -> None:
         """
         Benchmark performance of standard flat file formats and partitioning schemes.
@@ -43,6 +35,16 @@ class IOBench:
             runs (int): Number of benchmark runs.
             parsers (Optional[List[str]]): List of parsers to use.
         """
+        if parsers is None:
+            parsers = [
+                'avro', 
+                'parquet_polars', 
+                'parquet_arrow', 
+                'parquet_fast', 
+                'feather', 
+                'feather_arrow'
+            ]
+
         self.source_file = source_file
         self.output_dir = output_dir
         self.runs = runs
@@ -109,30 +111,31 @@ class IOBench:
                 except Exception as e:
                     self.console.print(f"[red]Failed to delete {file_path}. Reason: {e}")
 
-    def partition(
-        self,  
-        rows: dict = {
-            'avro': 500000,
-            'parquet': 3000000,
-            'feather': 1600000
-        }
-    ) -> None:
+    def partition(self, rows: dict = None) -> None:
         """
         Partition the source data into multiple files based on the specified row chunks.
 
         Args:
             rows (dict): Dictionary specifying the number of rows per partition for each format.
         """
+        if rows is None:
+            default_rows = {
+                'avro': 500000,
+                'parquet': 3000000,
+                'feather': 1600000
+            }
+        else:
+            default_rows = rows
         # map simple chunk sizes
         row_chunks = {
-            'avro': rows['avro'],
-            'parquet_polars': rows['parquet'],
-            'parquet_arrow': rows['parquet'],
-            'parquet_fast': rows['parquet'],
-            'feather': rows['feather'],
-            'feather_arrow': rows['feather']
+            'avro': default_rows['avro'],
+            'parquet_polars': default_rows['parquet'],
+            'parquet_arrow': default_rows['parquet'],
+            'parquet_fast': default_rows['parquet'],
+            'feather': default_rows['feather'],
+            'feather_arrow': default_rows['feather']
         }
-        with self.console.status(f'[cyan]writing partitioned data...', spinner='dots'):
+        with self.console.status('[cyan]writing partitioned data...', spinner='dots'):
             asyncio.run(self._partition(row_chunks))
         self.partitioned = True
 
@@ -172,7 +175,8 @@ class IOBench:
         
         await asyncio.gather(*tasks)
 
-    def _calculate_partition_ranges(self, total_rows: int, row_chunks: int) -> List[tuple]:
+    @staticmethod
+    def _calculate_partition_ranges(total_rows: int, row_chunks: int) -> List[tuple]:
         """
         Calculate the partition ranges given the total number of rows and chunk size.
 
@@ -186,7 +190,7 @@ class IOBench:
         num_partitions = max(1, (total_rows + row_chunks - 1) // row_chunks)  # Ensure at least one partition
         rows_per_partition = total_rows // num_partitions
         remainder = total_rows % num_partitions
-        
+
         partition_ranges = []
         start_idx = 0
 
@@ -194,11 +198,11 @@ class IOBench:
             end_idx = start_idx + rows_per_partition + (1 if i < remainder else 0)
             partition_ranges.append((start_idx, min(end_idx, total_rows)))
             start_idx = end_idx
-            
+
         return partition_ranges
 
-    
-    async def _write_avro(self, df: pd.DataFrame, file_path: str) -> None:
+    @staticmethod
+    async def _write_avro(df: pd.DataFrame, file_path: str) -> None:
         """
         Write a DataFrame to an Avro file.
 
@@ -221,7 +225,8 @@ class IOBench:
         with open(file_path, 'wb') as out:
             fastavro.writer(out, schema, records)
 
-    async def _write_parquet(self, df: pd.DataFrame, file_path: str) -> None:
+    @staticmethod
+    async def _write_parquet(df: pd.DataFrame, file_path: str) -> None:
         """
         Write a DataFrame to a Parquet file.
 
@@ -232,7 +237,8 @@ class IOBench:
         table = pa.Table.from_pandas(df)
         pq.write_table(table, file_path)
 
-    async def _write_feather(self, df: pd.DataFrame, file_path: str) -> None:
+    @staticmethod
+    async def _write_feather(df: pd.DataFrame, file_path: str) -> None:
         """
         Write a DataFrame to a Feather file.
 
@@ -268,8 +274,9 @@ class IOBench:
             benchmarks.append(bench)
         
         return benchmarks
-
-    def report(self, benchmark_results: List[Bench], report_dir: str = './result') -> None:
+    
+    @staticmethod
+    def report(benchmark_results: List[Bench], report_dir: str = './result') -> None:
         """
         Generate a report from benchmark results.
 

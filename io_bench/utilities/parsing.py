@@ -1,12 +1,8 @@
-import pandas as pd
 import os
 import glob
 import polars as pl
-import pyarrow as pa
-from typing import Any,List, Optional
-from rich.console import Console
+from typing import List, Optional
 from fastparquet import ParquetFile
-import pyarrow.feather as feather
 
 class AvroParser:
     def __init__(self, dir: str) -> None:
