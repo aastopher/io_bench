@@ -7,6 +7,9 @@
 coverage.xml
 
 # dev
+dev.py
+tmp_partition*
+box/*
 data/
 results/
 logs/
@@ -15,6 +18,7 @@ logs
 output
 data/
 result/
+site/
 .dev.py
 .dev
 dev.py

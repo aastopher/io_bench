@@ -1,0 +1,13 @@
+site_name: IOBench Docs
+theme:
+  name: mkdocs
+  user_color_mode_toggle:
+    color_mode: auto
+
+plugins:
+  - mkdocstrings
+
+nav:
+  - IOBench Docs: index.md
+  - Quick Start: quick_start.md
+  - Source: source.md
