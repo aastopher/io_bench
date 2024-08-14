@@ -7,7 +7,7 @@
 coverage.xml
 
 # dev
-main.py
+dev.py
 tmp_partition*
 box/*
 data/

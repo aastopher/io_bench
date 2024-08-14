@@ -21,10 +21,10 @@ def test_generate_sample(setup_environment):
     
     bench.generate_sample(records=1000)
     
-    # Check if the sample file is created
+    # Check if sample file is created
     assert os.path.exists(config['source_file']), "Sample CSV file was not created"
     
-    # Verify the content
+    # Verify content
     df = pd.read_csv(config['source_file'])
     assert len(df) == 1000, f"Generated sample does not contain the expected number of records - expected 1000 got {len(df)}"
 
@@ -70,23 +70,23 @@ def test_partition_ranges_adjustment(setup_environment):
     records = 750  
     bench.generate_sample(records=records)
     
-    # Trigger the partitioning logic
+    # Trigger partitioning logic
     partition_ranges = bench._calculate_partition_ranges(total_rows=records, row_chunks=500)
     
-    # Verify that the partition_ranges were adjusted correctly
+    # Verify that partition_ranges were adjusted correctly
     assert partition_ranges[-1][1] == records, "The last partition range was not adjusted to include all rows"
 
 def test_run_triggers_partition(setup_environment):
     config = setup_environment
     bench = IOBench(source_file=config['source_file'], output_dir=config['output_dir'])
 
-    # Generate the sample data to ensure the source file exists
+    # Generate sample data to ensure source file exists
     bench.generate_sample(records=100)
 
     # Ensure self.partitioned is False initially
     bench.partitioned = False
 
-    # Mock the partition method to confirm it gets called
+    # Mock partition method to confirm it gets called
     with patch.object(bench, 'partition', wraps=bench.partition) as mock_partition:
         bench.run(suffix='_test')
         mock_partition.assert_called_once()
@@ -99,7 +99,7 @@ def test_benchmark_counter_increment(setup_environment):
     bench.generate_sample(records=100)
     bench.partition()
     
-    # Run benchmarks multiple times to check the suffix and counter
+    # Run benchmarks multiple times to check suffix and counter
     suffix1 = f'_{bench.benchmark_counter}'
     benchmarks1 = bench.run()
     assert suffix1 in benchmarks1[0].id, "Suffix 1 not found in benchmark ID"
@@ -108,7 +108,7 @@ def test_benchmark_counter_increment(setup_environment):
     benchmarks2 = bench.run()
     assert suffix2 in benchmarks2[0].id, "Suffix 2 not found in benchmark ID"
 
-    # Ensure that the counter has incremented
+    # Ensure that counter has incremented
     assert int(suffix2.strip('_')) == int(suffix1.strip('_')) + 1, "Benchmark counter did not increment correctly"
 
 def test_run_benchmarks(setup_environment):
@@ -213,7 +213,7 @@ def test_clear_partitions_with_exception(setup_environment):
         
         bench.clear_partitions()
 
-        # Ensure that the correct error message was printed for each file
+        # Ensure that correct error message was printed for each file
         for folder, files in mock_files.items():
             for file in files:
                 expected_message = f"[red]Failed to delete {os.path.join(config['output_dir'], folder, file)}. Reason: Mock unlink error"

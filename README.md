@@ -1,5 +1,5 @@
 <!-- [![Documentation Status](https://readthedocs.org/projects/io_bench/badge/?version=latest)](https://io_bench.readthedocs.io/en/latest/?badge=latest) -->
-<!-- [![codecov](https://codecov.io/gh/aastopher/io_bench/graph/badge.svg?token=3RSWSCO72X)](https://codecov.io/gh/aastopher/io_bench) -->
+[![codecov](https://codecov.io/gh/aastopher/io_bench/graph/badge.svg?token=3RSWSCO72X)](https://codecov.io/gh/aastopher/io_bench)
 <!-- [![PyPI version](https://badge.fury.io/py/io_bench.svg)](https://badge.fury.io/py/io_bench) -->
 [![DeepSource](https://app.deepsource.com/gh/aastopher/io_bench.svg/?label=code+coverage&show_trend=true&token=3NT8mR1AQRLW9zDNKWQ8vgFl)](https://app.deepsource.com/gh/aastopher/io_bench/)
 
