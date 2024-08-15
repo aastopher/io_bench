@@ -7,6 +7,10 @@ theme:
 plugins:
   - mkdocstrings
 
+extra:
+  version:
+    provider: mike
+
 nav:
   - IOBench Docs: index.md
   - Quick Start: quick_start.md
