@@ -1,4 +1,4 @@
-<!-- [![PyPI version](https://badge.fury.io/py/io_bench.svg)](https://badge.fury.io/py/io_bench) -->
+[![PyPI version](https://badge.fury.io/py/io_bench.svg)](https://badge.fury.io/py/io_bench)
 [![Documentation Status](https://img.shields.io/badge/docs-online-brightgreen)](https://aastopher.github.io/io_bench/)
 [![codecov](https://codecov.io/gh/aastopher/io_bench/graph/badge.svg?token=79V7VRZWV0)](https://codecov.io/gh/aastopher/io_bench)
 [![DeepSource](https://app.deepsource.com/gh/aastopher/io_bench.svg/?label=active+issues&show_trend=true&token=3NT8mR1AQRLW9zDNKWQ8vgFl)](https://app.deepsource.com/gh/aastopher/io_bench/)
