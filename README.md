@@ -14,6 +14,9 @@ from io_bench import IOBench
 bench = IOBench(source_file='./data/source_100K.csv', runs=20, parsers=['avro', 'parquet_polars', 'parquet_arrow', 'parquet_fast', 'feather', 'feather_arrow'])
 bench.generate_sample(records=100000) # default value
 ```
+**NOTE:** `source_file` behavior is contextual:
+- Providing a desired name for your sample file then calling `generate_sample` will create the file. 
+- If you do not intend to generate a sample file, you must provide a valid path to an existing source file.
 
 ## Converting Data to Partitioned Formats
 Convert the generated CSV data to partitioned formats (Avro, Parquet, Feather) will automatically partition on default column selection chunks if not defined.

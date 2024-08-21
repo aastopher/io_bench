@@ -113,10 +113,10 @@ class IOBench:
 
     def partition(self, rows: dict = None) -> None:
         """
-        Partition the source data into multiple files based on the specified row chunks.
+        Partition source data into multiple files based on specified row chunks.
 
         Args:
-            rows (dict): Dictionary specifying the number of rows per partition for each format.
+            rows (dict): Dictionary specifying number of rows per partition for each file format.
         """
         if rows is None:
             default_rows = {
@@ -204,24 +204,35 @@ class IOBench:
     @staticmethod
     async def _write_avro(df: pd.DataFrame, file_path: str) -> None:
         """
-        Write a DataFrame to an Avro file.
+        Write a DataFrame to an Avro file without needing a predefined schema.
 
         Args:
             df (pd.DataFrame): DataFrame to write.
             file_path (str): Path to the output Avro file.
         """
+        # Convert the DataFrame to a list of dictionaries (records)
         records = df.to_dict('records')
+        
+        # Dynamically generate the Avro schema based on the DataFrame columns and types
+        avro_type_mapping = {
+            'int64': ['long', 'null'],
+            'float64': ['double', 'null'],
+            'object': ['string', 'null'],
+            'bool': ['boolean', 'null'],
+            'datetime64[ns]': [{'type': 'long', 'logicalType': 'timestamp-micros'}, 'null']
+        }
+        
+        # Create the Avro schema
         schema = {
             'type': 'record',
             'name': 'Benchmark',
             'fields': [
-                {'name': 'Region', 'type': 'string'},
-                {'name': 'Country', 'type': 'string'},
-                {'name': 'Total Cost', 'type': 'float'},
-                {'name': 'Sales', 'type': 'float'},
-                {'name': 'Profit', 'type': 'float'}
+                {'name': col, 'type': avro_type_mapping.get(str(dtype), ['string', 'null'])}
+                for col, dtype in df.dtypes.items()
             ]
         }
+        
+        # Write the records to an Avro file
         with open(file_path, 'wb') as out:
             fastavro.writer(out, schema, records)
 
