@@ -210,10 +210,9 @@ class IOBench:
             df (pd.DataFrame): DataFrame to write.
             file_path (str): Path to the output Avro file.
         """
-        # Convert the DataFrame to a list of dictionaries (records)
         records = df.to_dict('records')
         
-        # Dynamically generate the Avro schema based on the DataFrame columns and types
+        # Generate Avro schema based on the DataFrame columns and types
         avro_type_mapping = {
             'int64': ['long', 'null'],
             'float64': ['double', 'null'],
@@ -222,7 +221,7 @@ class IOBench:
             'datetime64[ns]': [{'type': 'long', 'logicalType': 'timestamp-micros'}, 'null']
         }
         
-        # Create the Avro schema
+        # Create schema
         schema = {
             'type': 'record',
             'name': 'Benchmark',
@@ -232,7 +231,7 @@ class IOBench:
             ]
         }
         
-        # Write the records to an Avro file
+        # Write records
         with open(file_path, 'wb') as out:
             fastavro.writer(out, schema, records)
 
